@@ -6,11 +6,11 @@
     <title>💥 교통사고 피해차량 대차/렌트 즉시 문의</title>
     <style>
         body { margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f6f9; color: #333; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        img { width: 100%; display: block; height: auto; } /* 이미지가 깨지지 않고 순서대로 정렬 */
+        .container { max-width: 600px; margin: 0 auto; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
+        img { width: 100%; display: block; height: auto; }
         
         /* 상담 신청 폼 디자인 */
-        .form-section { padding: 40px 20px; background: #111; color: #fff; }
+        .form-section { padding: 40px 20px; background: #111; color: #fff; scroll-margin-top: 20px; }
         .form-section h2 { margin-top: 0; color: #ffcc00; font-size: 24px; letter-spacing: -1px; }
         .form-section p { color: #aaa; font-size: 14px; margin-bottom: 25px; }
         .input-group { margin-bottom: 15px; }
@@ -19,9 +19,37 @@
         
         .submit-btn { width: 100%; padding: 16px; background: #ffcc00; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; color: #111; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .submit-btn:hover { background: #fff; }
+
+        /* 🎯 우측 하단 따라다니는 플로팅 버튼 */
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            background: #ffcc00;
+            color: #111;
+            padding: 15px 20px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-decoration: none;
+            z-index: 9999;
+            transition: 0.3s ease;
+            animation: bounce 2s infinite;
+        }
+        .floating-btn:hover { background: #fff; transform: scale(1.05); }
+
+        /* 버튼 통통 튀는 애니메이션 효과 (주목도 UP) */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
     </style>
 </head>
 <body>
+
+    <a href="#rentFormSection" class="floating-btn">💥 초고속 대차 신청</a>
 
     <div class="container">
         <img src="1.jpg" alt="사고대차 안내 1">
@@ -33,7 +61,7 @@
         <img src="7.jpg" alt="사고대차 안내 7">
         <img src="8.jpg" alt="사고대차 안내 8">
 
-        <div class="form-section">
+        <div class="form-section" id="rentFormSection">
             <h2>🚨 실시간 최고등급 대차 신청</h2>
             <p>정보를 입력하시면 담당자가 즉시 연락드립니다.</p>
             
@@ -50,8 +78,8 @@
                 <div class="input-group">
                     <select id="accident_type">
                         <option value="과실 없음 (100:0)">과실 없음 (100:0)</option>
-                        <option value="과실 있음 (8:2 이상)">과실 있음 (8:2 이상)</option>
-                        <option value="과실 있음 (8:2 이하)">과실 있음 (8:2 이하)</option>
+                        <option value="과실 있음 (쌍방과실)">과실 있음 (8:2 이상)</option>
+                        <option value="과실 있음 (쌍방과실)">과실 있음 (8:2 이하)</option>
                         <option value="단독사고 / 자차 / 기타">단독사고 / 자차 / 기타 문의</option>
                     </select>
                 </div>
@@ -61,10 +89,15 @@
     </div>
 
     <script>
-        // 🎯 사장님이 전달해주신 고유 정보 연동 완료
         const BOT_TOKEN = '8987413604:AAFJIrOKXxghzL6QwhpARyh4tgta494r85Q';
         const CHAT_ID = '-5286267356';
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbysWIP-W-4OvL-HrVi08QRKDVaTrsU9cwHWs_Ks-d3VOMpqnRZoKWx17QeCqZvG1nQ0Tw/exec';
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbw0B1TlOsuA3AcBImiL28MHPiHijUlhgr0ahlPEYSHymVyDxJBj8tuCeqCDMTOJ0OXy7A/exec';
+
+        // 플로팅 버튼 부드러운 스크롤 이동 기능
+        document.querySelector('.floating-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('#rentFormSection').scrollIntoView({ behavior: 'smooth' });
+        });
 
         document.getElementById('rentForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -78,7 +111,7 @@
             submitBtn.disabled = true;
             submitBtn.innerText = '접수 중...';
 
-            // 1. 텔레그램 실시간 알림 포맷 설정
+            // 1. 텔레그램 메시지 포맷
             const text = `🚨 [사고대차 DB 실시간 접수] 🚨\n\n` +
                          `👤 신청자: ${name}\n` +
                          `📞 연락처: ${phone}\n` +
@@ -86,33 +119,30 @@
                          `📝 과실유형: ${accidentType}\n\n` +
                          `⚡ 확인 후 즉시 배차 연락 바랍니다.`;
 
-            // 텔레그램 발송 요청
             const telegramPromise = fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: CHAT_ID, text: text })
             });
 
-            // 2. 구글 시트 데이터 전송 요청
-            const sheetPromise = fetch(GOOGLE_SHEET_URL, {
+            // 2. 구글 시트 호환성 극대화 전송 (CORS 차단 방지용 URLSearchParams 구성)
+            const sheetUrlWithParams = `${GOOGLE_SHEET_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&carModel=${encodeURIComponent(carModel)}&accidentType=${encodeURIComponent(accidentType)}`;
+            
+            // no-cors 모드로 에러 팝업 강제 차단 및 안전 전송
+            const sheetPromise = fetch(sheetUrlWithParams, {
                 method: 'POST',
-                body: JSON.stringify({
-                    name: name,
-                    phone: phone,
-                    carModel: carModel,
-                    accidentType: accidentType
-                })
+                mode: 'no-cors'
             });
 
-            // 3. 텔레그램방 알림 및 구글 시트 저장이 둘 다 완료되었을 때 실행
+            // 3. 비동기 처리 완료 후 액션
             Promise.all([telegramPromise, sheetPromise])
             .then(() => {
                 alert('신청이 완료되었습니다. 담당자가 곧 연락드리겠습니다!');
-                document.getElementById('rentForm').reset(); // 입력 폼 비우기
+                document.getElementById('rentForm').reset();
             })
             .catch(err => {
                 console.error(err);
-                alert('접수 중 시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+                alert('접수 중 오류가 발생했습니다. 담당자 확인이 필요합니다.');
             })
             .finally(() => {
                 submitBtn.disabled = false;
