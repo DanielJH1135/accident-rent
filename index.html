@@ -1,117 +1,59 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💥 교통사고 피해차량 대차/렌트 즉시 문의</title>
-    <style>
-        body { margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f6f9; color: #333; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        img { width: 100%; display: block; height: auto; } /* 이미지가 깨지지 않고 순서대로 정렬 */
+<script>
+    const BOT_TOKEN = '8987413604:AAFJIrOKXxghzL6QwhpARyh4tgta494r85Q';
+    const CHAT_ID = '-5286267356';
+    // 🎯 방금 복사한 구글 웹 앱 주소를 여기에 붙여넣으세요!
+    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbysWIP-W-4OvL-HrVi08QRKDVaTrsU9cwHWs_Ks-d3VOMpqnRZoKWx17QeCqZvG1nQ0Tw/exec';
+
+    document.getElementById('rentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        /* 상담 신청 폼 디자인 */
-        .form-section { padding: 40px 20px; background: #111; color: #fff; }
-        .form-section h2 { margin-top: 0; color: #ffcc00; font-size: 24px; letter-spacing: -1px; }
-        .form-section p { color: #aaa; font-size: 14px; margin-bottom: 25px; }
-        .input-group { margin-bottom: 15px; }
-        .input-group input, .input-group select { width: 100%; padding: 14px; box-sizing: border-box; border: none; border-radius: 6px; font-size: 16px; background: #f9f9f9; }
-        .input-group input:focus, .input-group select:focus { idline: 2px solid #ffcc00; background: #fff; }
+        const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
+        const carModel = document.getElementById('car_model').value;
+        const accidentType = document.getElementById('accident_type').value;
         
-        .submit-btn { width: 100%; padding: 16px; background: #ffcc00; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; color: #111; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .submit-btn:hover { background: #fff; }
-    </style>
-</head>
-<body>
+        const submitBtn = document.querySelector('.submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '접수 중...';
 
-    <div class="container">
-        <img src="1.jpg" alt="사고대차 안내 1">
-        <img src="2.jpg" alt="사고대차 안내 2">
-        <img src="3.jpg" alt="사고대차 안내 3">
-        <img src="4.jpg" alt="사고대차 안내 4">
-        <img src="5.jpg" alt="사고대차 안내 5">
-        <img src="6.jpg" alt="사고대차 안내 6">
-        <img src="7.jpg" alt="사고대차 안내 7">
-        <img src="8.jpg" alt="사고대차 안내 8">
+        // 1. 텔레그램 발송 데이터 및 요청
+        const text = `🚨 [사고대차 DB 실시간 접수] 🚨\n\n` +
+                     `👤 신청자: ${name}\n` +
+                     `📞 연락처: ${phone}\n` +
+                     `🚗 피해차종: ${carModel}\n` +
+                     `📝 과실유형: ${accidentType}\n\n` +
+                     `⚡ 확인 후 즉시 배차 연락 바랍니다.`;
 
-        <div class="form-section">
-            <h2>🚨 실시간 최고등급 대차 신청</h2>
-            <p>정보를 입력하시면 담당자가 즉시 연락드립니다.</p>
-            
-            <form id="rentForm">
-                <div class="input-group">
-                    <input type="text" id="name" placeholder="고객 성함" required>
-                </div>
-                <div class="input-group">
-                    <input type="tel" id="phone" placeholder="연락처 (예: 010-1234-5678)" required>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="car_model" placeholder="피해 차량 종류 및 배기량 (ex: 그랜저 2.4)" required>
-                </div>
-                <div class="input-group">
-                    <select id="accident_type">
-                        <option value="과실 없음 (100:0)">과실 없음 (100:0)</option>
-                        <option value="과실 있음 (쌍방과실)">과실 있음 (쌍방과실)</option>
-                        <option value="단독사고 / 자차 / 기타">단독사고 / 자차 / 기타 문의</option>
-                    </select>
-                </div>
-                <button type="submit" class="submit-btn">렌트카 즉시 신청하기</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // ⚠️ [중요] 텔레그램 토큰과 채널(방) ID를 각각 정확히 넣어주세요!
-        const BOT_TOKEN = '8987413604:AAFJIrOKXxghzL6QwhpARyh4tgta494r85Q';
-        const CHAT_ID = '-5286267356';
-
-        document.getElementById('rentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const carModel = document.getElementById('car_model').value;
-            const accidentType = document.getElementById('accident_type').value;
-            
-            const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = '접수 중...';
-
-            // 텔레그램 톡방 포맷팅 (양쪽 사장님 확인용)
-            const text = `🚨 [사고대차 DB 실시간 접수] 🚨\n\n` +
-                         `👤 신청자: ${name}\n` +
-                         `📞 연락처: ${phone}\n` +
-                         `🚗 피해차종: ${carModel}\n` +
-                         `📝 과실유형: ${accidentType}\n\n` +
-                         `⚡ 확인 후 즉시 배차 연락 바랍니다.`;
-
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-            
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    text: text
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.ok) {
-                    alert('신청이 완료되었습니다. 담당자가 곧 연락드리겠습니다!');
-                    document.getElementById('rentForm').reset();
-                } else {
-                    alert('접수 중 오류가 발생했습니다. 잠시 후 다시 시to해 주세요.');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('네트워크 에러가 발생했습니다.');
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerText = '렌트카 즉시 신청하기';
-            });
+        const telegramPromise = fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CHAT_ID, text: text })
         });
-    </script>
-</body>
-</html>
+
+        // 2. 구글 시트 발송 데이터 및 요청
+        const sheetPromise = fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                name: name,
+                phone: phone,
+                carModel: carModel,
+                accidentType: accidentType
+            })
+        });
+
+        // 3. 둘 다 전송 완료되면 알림 띄우기
+        Promise.all([telegramPromise, sheetPromise])
+        .then(() => {
+            alert('신청이 완료되었습니다. 담당자가 곧 연락드리겠습니다!');
+            document.getElementById('rentForm').reset();
+        })
+        .catch(err => {
+            console.error(err);
+            alert('접수 중 시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = '렌트카 즉시 신청하기';
+        });
+    });
+</script>
