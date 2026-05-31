@@ -89,59 +89,54 @@
     </div>
 
     <script>
-        // 플로팅 버튼 부드러운 스크롤 이동 기능
-        document.querySelector('.floating-btn').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelector('#rentFormSection').scrollIntoView({ behavior: 'smooth' });
-        });
+       document.getElementById('rentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value;
+    const carModel = document.getElementById('car_model').value;
+    const accidentType = document.getElementById('accident_type').value;
+    
+    const submitBtn = document.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = '접수 중...';
 
-        document.getElementById('rentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const carModel = document.getElementById('car_model').value;
-            const accidentType = document.getElementById('accident_type').value;
-            
-            const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = '접수 중...';
+    const payload = {
+        name: name,
+        phone: phone,
+        carModel: carModel,
+        accidentType: accidentType
+    };
 
-            // 1. 보안을 위해 외부 주소 다 빼고 내 Vercel 서버리스 주소로 쏠 데이터 팩킹
-            const payload = {
-                name: name,
-                phone: phone,
-                carModel: carModel,
-                accidentType: accidentType
-            };
-
-            // 2. Vercel 서버리스 함수 라우트로 깔끔하게 단 한 번만 전송
-            fetch('/api/submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('서버리스 함수 응답 오류');
-                }
-                return res.json();
-            })
-            .then(data => {
-                alert('신청이 완료되었습니다. 담당자가 곧 연락드리겠습니다!');
-                document.getElementById('rentForm').reset();
-            })
-            .catch(err => {
-                console.error(err);
-                alert('접수 중 오류가 발생했습니다. Vercel 실시간 로그를 확인해주세요.');
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerText = '렌트카 즉시 신청하기';
-            });
-        });
+    fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(async res => {
+        const result = await res.json();
+        if (!res.ok) {
+            // 서버가 보내준 구체적인 에러 메시지를 throw 함
+            throw new Error(result.error || '알 수 없는 서버 에러');
+        }
+        return result;
+    })
+    .then(data => {
+        alert('신청이 완료되었습니다. 담당자가 곧 연락드리겠습니다!');
+        document.getElementById('rentForm').reset();
+    })
+    .catch(err => {
+        console.error(err);
+        // 🚨 이제 여기에 정확히 어떤 변수가 빠졌는지 대놓고 찍힙니다.
+        alert(`[접수 실패 안내]\n${err.message}`);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerText = '렌트카 즉시 신청하기';
+    });
+});
     </script>
 </body>
 </html>
