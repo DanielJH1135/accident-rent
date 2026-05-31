@@ -89,10 +89,6 @@
     </div>
 
     <script>
-        const BOT_TOKEN = '8987413604:AAFJIrOKXxghzL6QwhpARyh4tgta494r85Q';
-        const CHAT_ID = '-5286267356';
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbw0B1TlOsuA3AcBImiL28MHPiHijUlhgr0ahlPEYSHymVyDxJBj8tuCeqCDMTOJ0OXy7A/exec';
-
         // 플로팅 버튼 부드러운 스크롤 이동 기능
         document.querySelector('.floating-btn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -111,38 +107,35 @@
             submitBtn.disabled = true;
             submitBtn.innerText = '접수 중...';
 
-            // 1. 텔레그램 메시지 포맷
-            const text = `🚨 [사고대차 DB 실시간 접수] 🚨\n\n` +
-                         `👤 신청자: ${name}\n` +
-                         `📞 연락처: ${phone}\n` +
-                         `🚗 피해차종: ${carModel}\n` +
-                         `📝 과실유형: ${accidentType}\n\n` +
-                         `⚡ 확인 후 즉시 배차 연락 바랍니다.`;
+            // 1. 보안을 위해 외부 주소 다 빼고 내 Vercel 서버리스 주소로 쏠 데이터 팩킹
+            const payload = {
+                name: name,
+                phone: phone,
+                carModel: carModel,
+                accidentType: accidentType
+            };
 
-            const telegramPromise = fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            // 2. Vercel 서버리스 함수 라우트로 깔끔하게 단 한 번만 전송
+            fetch('/api/submit', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: CHAT_ID, text: text })
-            });
-
-            // 2. 구글 시트 호환성 극대화 전송 (CORS 차단 방지용 URLSearchParams 구성)
-            const sheetUrlWithParams = `${GOOGLE_SHEET_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&carModel=${encodeURIComponent(carModel)}&accidentType=${encodeURIComponent(accidentType)}`;
-            
-            // no-cors 모드로 에러 팝업 강제 차단 및 안전 전송
-            const sheetPromise = fetch(sheetUrlWithParams, {
-                method: 'POST',
-                mode: 'no-cors'
-            });
-
-            // 3. 비동기 처리 완료 후 액션
-            Promise.all([telegramPromise, sheetPromise])
-            .then(() => {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('서버리스 함수 응답 오류');
+                }
+                return res.json();
+            })
+            .then(data => {
                 alert('신청이 완료되었습니다. 담당자가 곧 연락드리겠습니다!');
                 document.getElementById('rentForm').reset();
             })
             .catch(err => {
                 console.error(err);
-                alert('접수 중 오류가 발생했습니다. 담당자 확인이 필요합니다.');
+                alert('접수 중 오류가 발생했습니다. Vercel 실시간 로그를 확인해주세요.');
             })
             .finally(() => {
                 submitBtn.disabled = false;
